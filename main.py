@@ -4,9 +4,11 @@ from imageai.Detection.Custom import CustomObjectDetection
 import cv2
 import random
 import os
+import time
 
 status = False
 object_name = ''
+object_probability = 0
 
 
 def exit_app(e):
@@ -46,6 +48,8 @@ class Gui:
         # Get a frame from the video source
         global status
         global object_name
+        global object_probability
+        #status_test = False
 
         self.delay = 15
         ret, frame = self.vid.get_frame()
@@ -66,7 +70,7 @@ class Gui:
                     pics = os.listdir(path)
                     p_picked = random.choice(pics)
                     img = Image.open(path + "\\" + str(p_picked))
-
+                    object_name = ''
                     #  Hur länge info bilden ska synas
                     self.delay = 2000
                 else:
@@ -74,11 +78,29 @@ class Gui:
                 status = False
 
             else:
-                img = Image.fromarray(frame)
+                if object_name != '' and int(object_probability) > 89:
+                    time.sleep(1)
+                    if object_name == 'Kartong':
+                        status_test = True
+                        path = os.getcwd() + "\\Kartongslut"
+                    elif object_name == 'Metall':
+                        path = os.getcwd() + "\\Metallslut"
+                    elif object_name == 'Plast':
+                        path = os.getcwd() + "\\Plastslut"
+
+                    pics = os.listdir(path)
+                    p_picked = random.choice(pics)
+                    img = Image.open(path + "\\" + str(p_picked))
+
+                else:
+                    img = Image.fromarray(frame)
 
             img = img.resize((window.winfo_screenwidth(), window.winfo_screenheight()), Image.ANTIALIAS)
             self.photo = ImageTk.PhotoImage(image=img)
             self.canvas.create_image(0, 0, image=self.photo, anchor=NW)
+            #if status_test == True:
+                #time.sleep(4)
+                #status_test = False
 
         self.window.after(self.delay, self.update)
 
@@ -97,6 +119,7 @@ class Camera:
     def get_frame(self, ret=None):
         if self.vid.isOpened():
             global object_name
+            global object_probability
             ret, frame = self.vid.read()
             frame = cv2.flip(frame, 1)
             if ret:
@@ -110,21 +133,22 @@ class Camera:
                 for detection in detections:
                     (x1, y1, x2, y2) = detection["box_points"]
                     object_name = detection["name"]
+                    object_probability = detection["percentage_probability"]
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
                     font = cv2.FONT_HERSHEY_DUPLEX
                     fontscale = 1
                     org = (x1 + 6, y1 - 6)
                     thickness = 1
-                    if int(detection["percentage_probability"]) < 50:
+                    if int(object_probability) < 50:
                         color = (0, 0, 255)
-                    elif int(50 < detection["percentage_probability"] < 75):
+                    elif int(50 < object_probability < 75):
                         color = (0, 230, 230)
                     else:
                         color = (0, 179, 0)
 
                     cv2.putText(
                                 frame,
-                                object_name + ": " + str(int(detection["percentage_probability"])) + "%",
+                                object_name + ": " + str(int(object_probability)) + "%",
                                 org,
                                 font,
                                 fontscale,
