@@ -1,0 +1,32 @@
+#define SENSOR_TRIG 13
+#define SENSOR_ECHO 12
+
+void setup() 
+{
+  // put your setup code here, to run once:
+  pinMode(SENSOR_TRIG, OUTPUT);
+  pinMode(SENSOR_ECHO, INPUT);
+  Serial.begin(57600);
+  Serial.setTimeout(100);
+}
+
+void loop() 
+{
+  long duration, distanceCm, distanceIn;
+  digitalWrite(SENSOR_TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(SENSOR_TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(SENSOR_TRIG, LOW);
+  duration = pulseIn(SENSOR_ECHO, HIGH);
+  distanceCm = duration / 29.1 / 2;
+  if(distanceCm < 30)
+  {
+    Serial.println("K");
+  }
+  else
+  {
+    Serial.println("l");
+  }
+  delay(1000);
+}
